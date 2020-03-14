@@ -1,7 +1,0 @@
-{
-    "arduino.path": "/home/y2k38/Downloads/arduino-1.8.6/arduino",
-    "board": "arduino:avr:uno",
-    "sketch": "base.ino",
-    "port": "/dev/ttyACM1",
-    "output": "../build"
-}
