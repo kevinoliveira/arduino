@@ -1,8 +1,8 @@
 // CONSTANTS
-int LDR_PIN = 13;
+int LDR_PIN = A0;
 
 // DATA
-int sensorValue = 0;
+int ldr_value = 0;
 
 void setup()
 {
@@ -11,8 +11,6 @@ void setup()
 
 void loop()
 {
-    sensorValue = analogRead(LDR_PIN);
-    Serial.println(sensorValue);
-
-    delay(100);
+    ldr_value = analogRead(LDR_PIN);
+    Serial.println(ldr_value);
 }
