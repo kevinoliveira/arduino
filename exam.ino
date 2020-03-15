@@ -1,6 +1,5 @@
 // LDR
 const int LDR_PIN = A0;
-int ldr_value = 0;
 int min_ldr_value = 1023;
 int max_ldr_value = 0;
 int ldr_level = 0; // from 0 to 9
@@ -88,10 +87,25 @@ void display_calibration(int type) {
     digitalWrite(LATCH_PIN, HIGH);
 }
 
-void ldr_handler(int raw_ldr_value) {
-    ldr_value = raw_ldr_value;
-    if (raw_ldr_value >= max_ldr_value) max_ldr_value = raw_ldr_value;
+
+
+void calibrate_max(){
+    display_calibration(C_MAX);
+    int raw_ldr_value = analogRead(LDR_PIN);
+    if (raw_ldr_value >= max_ldr_value ) max_ldr_value = raw_ldr_value;
+}
+
+void calibrate_min(){
+    display_calibration(C_MIN);
+    int raw_ldr_value = analogRead(LDR_PIN);
     if (raw_ldr_value <= min_ldr_value) min_ldr_value = raw_ldr_value;
+
+}
+
+void ldr_handler() {
+    int raw_ldr_value = analogRead(LDR_PIN);
+    if (raw_ldr_value >= max_ldr_value && calibration_mode == AUTO_MODE) max_ldr_value = raw_ldr_value;
+    if (raw_ldr_value <= min_ldr_value && calibration_mode == AUTO_MODE) min_ldr_value = raw_ldr_value;
 
     int level = value_to_ldr_level(raw_ldr_value);
     if(level >= 8) active_alarm();
@@ -152,8 +166,16 @@ int step_celing(
 }
 
 void calibrate_interruption() {
-    if(calibration_mode == 3) calibration_mode = 0 ;
+    if(calibration_mode == 3) calibration_mode = 0;
     else calibration_mode++; 
+    switch (calibration_mode) {
+        case CAL_MAX_MODE:
+            max_ldr_value = 0;
+            break;
+        case CAL_MIN_MODE:
+            min_ldr_value = 1023;
+            break;
+    }
 }
 
 // HELPERS
@@ -179,17 +201,17 @@ void setup() {
 void loop() {
     switch(calibration_mode) {
         case AUTO_MODE : 
-            ldr_handler(analogRead(LDR_PIN));
+            ldr_handler();
             led_handler();
             break;
         case CAL_MAX_MODE : 
-            display_calibration(C_MAX);
+            calibrate_max();
             break;
         case CAL_MIN_MODE : 
-            display_calibration(C_MIN);
+            calibrate_min();
             break;
         case MANUAL_MODE:
-            ldr_handler(analogRead(LDR_PIN));
+            ldr_handler();
             led_handler();
             break;
 
