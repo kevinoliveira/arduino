@@ -181,7 +181,7 @@ void loop() {
         case AUTO_MODE : 
             ldr_handler(analogRead(LDR_PIN));
             led_handler();
-            break;       // and exits the switch
+            break;
         case CAL_MAX_MODE : 
             display_calibration(C_MAX);
             break;
