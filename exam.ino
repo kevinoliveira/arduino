@@ -47,8 +47,8 @@ const int LEVEL_DISPLAY [22] = {
     A+B+C+D+F+G+DP,     // 9 - automaico
 
     // CALIBRATION DISPLAY
-    A+F+E+D,            // CALIBRATE MAX C_MAX
-    A+F+E+D+DP,         // CALIBRATE MIN C_MIN
+    A+F+B+G,            // CALIBRATE MAX C_MAX
+    G+E+C+D,         // CALIBRATE MIN C_MIN
 };
 
 const int C_MAX = 20;
