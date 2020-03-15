@@ -6,6 +6,13 @@ int max_ldr_value = 0;
 int ldr_level = 0; // from 0 to 9
 int number_of_steps = 10; // 0-1, 1-2, 2-3, 3-4, 4-5, 5-6, 6-7, 7-8, 8-9, 9-10 
 
+// 74HC595
+int LATCH_PIN = 6; // ST_CP
+int CLOCK_PIN = 5; // SH_CP
+int DATA_PIN  = 7; // DS
+
+
+
 
 void ldr_handler(int raw_ldr_value) {
     ldr_value = raw_ldr_value;
@@ -56,9 +63,19 @@ void blank_line(){
 
 void setup() {
     Serial.begin(9600);
+    pinMode(LATCH_PIN,OUTPUT);
+    pinMode(CLOCK_PIN,OUTPUT);
+    pinMode(DATA_PIN,OUTPUT);
 }
 
 void loop() {
     ldr_handler(analogRead(LDR_PIN));
+
+    int ShiftOut_value = 1;
+    digitalWrite(LATCH_PIN, LOW);
+    shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, ShiftOut_value);  
+    digitalWrite(LATCH_PIN, HIGH);
+
+
     delay(300);
 }
