@@ -1,58 +1,90 @@
 // LDR
-int LDR_PIN = A0;
+const int LDR_PIN = A0;
 int ldr_value = 0;
 int min_ldr_value = 1023;
 int max_ldr_value = 0;
 int ldr_level = 0; // from 0 to 9
-int number_of_steps = 10; // 0-1, 1-2, 2-3, 3-4, 4-5, 5-6, 6-7, 7-8, 8-9, 9-10 
+const int NUMBER_OF_STEPS = 10; // 0-1, 1-2, 2-3, 3-4, 4-5, 5-6, 6-7, 7-8, 8-9, 9-10 
 
 // 74HC595
-int LATCH_PIN = 6; // ST_CP
-int CLOCK_PIN = 5; // SH_CP
-int DATA_PIN  = 7; // DS
+const int LATCH_PIN = 6; // ST_CP
+const int CLOCK_PIN = 5; // SH_CP
+const int DATA_PIN  = 7; // DS
 
-int A = 2;
-int B = 4;
-int C = 8;
-int D = 16;
-int E = 32;
-int F = 64;
-int G = 128;
-int DP = 1;
+const int A = 2;
+const int B = 4;
+const int C = 8;
+const int D = 16;
+const int E = 32;
+const int F = 64;
+const int G = 128;
+const int DP = 1;
 
-int LEVEL_DISPLAY [12] = {
-    A+B+C+D+E+F,    // 0
-    B+C,            // 1
-    A+B+G+E+D,      // 2
-    A+B+G+C+D,      // 3
-    F+G+B+C,        // 4
-    A+F+G+C+D,      // 5
-    A+C+D+E+F+G,    // 6
-    A+B+C,          // 7
-    A+B+C+D+E+F+G,  // 8
-    A+B+C+D+F+G,    // 9
-    A+F+E+D,        // CALIBRATE MAX
-    A+F+E+D+DP,     // CALIBRATE MIN
+const int LEVEL_DISPLAY [22] = {
+
+    // MANUAL NUMBERS
+    A+B+C+D+E+F,        // 0 - manual
+    B+C,                // 1 - manual
+    A+B+G+E+D,          // 2 - manual
+    A+B+G+C+D,          // 3 - manual
+    F+G+B+C,            // 4 - manual
+    A+F+G+C+D,          // 5 - manual
+    A+C+D+E+F+G,        // 6 - manual
+    A+B+C,              // 7 - manual
+    A+B+C+D+E+F+G,      // 8 - manual
+    A+B+C+D+F+G,        // 9 - manual
+
+    // AUTOMATIC NUMBERS
+    A+B+C+D+E+F+DP,     // 0 - automaico
+    B+C+DP,             // 1 - automaico
+    A+B+G+E+D+DP,       // 2 - automaico
+    A+B+G+C+D+DP,       // 3 - automaico
+    F+G+B+C+DP,         // 4 - automaico
+    A+F+G+C+D+DP,       // 5 - automaico
+    A+C+D+E+F+G+DP,     // 6 - automaico
+    A+B+C+DP,           // 7 - automaico
+    A+B+C+D+E+F+G+DP,   // 8 - automaico
+    A+B+C+D+F+G+DP,     // 9 - automaico
+
+    // CALIBRATION DISPLAY
+    A+F+E+D,            // CALIBRATE MAX C_MAX
+    A+F+E+D+DP,         // CALIBRATE MIN C_MIN
 };
 
+const int C_MAX = 20;
+const int C_MIN = 21;
+
 // ALARM 
-int LED_PIN = A1;
-int DESTIVATE_PUSH_BUTTON_PIN = 2;
-int INTERVAL = 100;
+const int LED_PIN = A1;
+const int DESTIVATE_PUSH_BUTTON_PIN = 2;
+const int INTERVAL = 100;
 bool led_state = false;
 bool is_alarm_activated = false;
 unsigned long previous_time;
 
 
 // CALIBRATION
-int CALIBRATION_PIN = 3;
+const int CALIBRATION_PIN = 3;
+volatile int calibration_mode = 0; // 0 - automatic, 1- calibrate max, 2 - calibrate min, 3 - operate with manual calibration
+const byte AUTO_MODE = 0;
+const byte CAL_MAX_MODE = 1;
+const byte CAL_MIN_MODE = 2;
+const byte MANUAL_MODE = 3;
+
 
 
 
 void display_number(int number){
-    if(number < 0 || number > 11) return;
+    if(number < 0 || number > 9) return;
     digitalWrite(LATCH_PIN, LOW);
-    shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, LEVEL_DISPLAY[number]);  
+    shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, LEVEL_DISPLAY[ calibration_mode == AUTO_MODE? number + NUMBER_OF_STEPS : number ]);  
+    digitalWrite(LATCH_PIN, HIGH);
+}
+
+void display_calibration(int type) {
+    if(type != C_MAX && type != C_MIN) return;
+    digitalWrite(LATCH_PIN, LOW);
+    shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, LEVEL_DISPLAY[type]);  
     digitalWrite(LATCH_PIN, HIGH);
 }
 
@@ -82,6 +114,7 @@ void led_handler(){
     }
 }
 
+
 void active_alarm(){
     is_alarm_activated = true;
 }
@@ -94,8 +127,8 @@ void desativate_alarm(){
 
 int value_to_ldr_level(int value) {
     int level = 0;
-    for(;level<number_of_steps-1;level++){
-        if(value <= step_celing(level, min_ldr_value, max_ldr_value, number_of_steps)) return level;
+    for(;level<NUMBER_OF_STEPS-1;level++){
+        if(value <= step_celing(level, min_ldr_value, max_ldr_value, NUMBER_OF_STEPS)) return level;
     }
     return level;
 }
@@ -104,18 +137,23 @@ int step_floor(
     int step,
     int min_value,
     int max_value,
-    int number_of_steps
+    int NUMBER_OF_STEPS
     ) {
-    return  min_value + ( ( (max_value - min_value) / number_of_steps ) * step );
+    return  min_value + ( ( (max_value - min_value) / NUMBER_OF_STEPS ) * step );
 }
 
 int step_celing(
     int step,
     int min_value,
     int max_value,
-    int number_of_steps
+    int NUMBER_OF_STEPS
     ) {
-    return step_floor(step+1,min_value,max_value,number_of_steps); 
+    return step_floor(step+1,min_value,max_value,NUMBER_OF_STEPS); 
+}
+
+void calibrate_interruption() {
+    if(calibration_mode == 3) calibration_mode = 0 ;
+    else calibration_mode++; 
 }
 
 // HELPERS
@@ -133,12 +171,27 @@ void setup() {
     pinMode(DATA_PIN,OUTPUT);
     pinMode(LED_PIN,OUTPUT);
     pinMode(DESTIVATE_PUSH_BUTTON_PIN, INPUT_PULLUP);
+    pinMode(CALIBRATION_PIN, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(DESTIVATE_PUSH_BUTTON_PIN), desativate_alarm, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CALIBRATION_PIN), calibrate_interruption, FALLING);
 }
 
 void loop() {
-    ldr_handler(analogRead(LDR_PIN));
-    led_handler();
+    switch(calibration_mode) {
+        case AUTO_MODE : 
+            ldr_handler(analogRead(LDR_PIN));
+            led_handler();
+            break;       // and exits the switch
+        case CAL_MAX_MODE : 
+            display_calibration(C_MAX);
+            break;
+        case CAL_MIN_MODE : 
+            display_calibration(C_MIN);
+            break;
+        case MANUAL_MODE:
+            ldr_handler(analogRead(LDR_PIN));
+            led_handler();
+            break;
 
-   
+    }   
 }
