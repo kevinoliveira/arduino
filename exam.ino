@@ -35,6 +35,13 @@ int LEVEL_DISPLAY [12] = {
     A+F+E+D+DP,     // CALIBRATE MIN
 };
 
+// ALARM LED
+int LED_PIN = A1;
+int INTERVAL = 100;
+bool led_state = false;
+bool is_alarm_activated = false;
+unsigned long previous_time;
+
 
 void display_number(int number){
     if(number < 0 || number > 11) return;
@@ -96,9 +103,18 @@ void setup() {
     pinMode(LATCH_PIN,OUTPUT);
     pinMode(CLOCK_PIN,OUTPUT);
     pinMode(DATA_PIN,OUTPUT);
+    pinMode(LED_PIN,OUTPUT);
 }
 
 void loop() {
     ldr_handler(analogRead(LDR_PIN));
-    delay(300);
+    
+    unsigned long current_time = millis();
+
+    if(current_time - previous_time >= INTERVAL){
+        led_state = !led_state;
+        previous_time = current_time;
+        digitalWrite(LED_PIN, led_state);
+    }
+
 }
