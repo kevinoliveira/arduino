@@ -35,8 +35,9 @@ int LEVEL_DISPLAY [12] = {
     A+F+E+D+DP,     // CALIBRATE MIN
 };
 
-// ALARM LED
+// ALARM 
 int LED_PIN = A1;
+int DESTIVATE_PUSH_BUTTON_PIN = A2;
 int INTERVAL = 100;
 bool led_state = false;
 bool is_alarm_activated = false;
@@ -55,12 +56,34 @@ void ldr_handler(int raw_ldr_value) {
     if (raw_ldr_value >= max_ldr_value) max_ldr_value = raw_ldr_value;
     if (raw_ldr_value <= min_ldr_value) min_ldr_value = raw_ldr_value;
 
+    int level = value_to_ldr_level(raw_ldr_value);
+    if(level >= 8) active_alarm();
+
     pretty_log_int("raw: ",raw_ldr_value);
     pretty_log_int("min: ",min_ldr_value);
     pretty_log_int("max: ",max_ldr_value);
-    pretty_log_int("lvl: ",value_to_ldr_level(raw_ldr_value));
+    pretty_log_int("lvl: ",level);
     blank_line();
-    display_number(value_to_ldr_level(raw_ldr_value));
+    display_number(level);
+}
+
+void led_handler(){
+    unsigned long current_time = millis();
+
+    if(current_time - previous_time >= INTERVAL && is_alarm_activated){
+        led_state = !led_state;
+        previous_time = current_time;
+        digitalWrite(LED_PIN, led_state);
+    }
+}
+
+void active_alarm(){
+    is_alarm_activated = true;
+}
+void desativate_alarm(){
+    is_alarm_activated = false;
+    led_state = false;
+    digitalWrite(LED_PIN, led_state);
 }
 
 
@@ -104,17 +127,14 @@ void setup() {
     pinMode(CLOCK_PIN,OUTPUT);
     pinMode(DATA_PIN,OUTPUT);
     pinMode(LED_PIN,OUTPUT);
+    pinMode(DESTIVATE_PUSH_BUTTON_PIN, INPUT_PULLUP);
+
 }
 
 void loop() {
     ldr_handler(analogRead(LDR_PIN));
-    
-    unsigned long current_time = millis();
+    led_handler();
 
-    if(current_time - previous_time >= INTERVAL){
-        led_state = !led_state;
-        previous_time = current_time;
-        digitalWrite(LED_PIN, led_state);
-    }
-
+    if(digitalRead(DESTIVATE_PUSH_BUTTON_PIN)== LOW ) desativate_alarm();
+   
 }
