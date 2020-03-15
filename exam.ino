@@ -11,8 +11,37 @@ int LATCH_PIN = 6; // ST_CP
 int CLOCK_PIN = 5; // SH_CP
 int DATA_PIN  = 7; // DS
 
+int A = 2;
+int B = 4;
+int C = 8;
+int D = 16;
+int E = 32;
+int F = 64;
+int G = 128;
+int DP = 1;
+
+int LEVEL_DISPLAY [12] = {
+    A+B+C+D+E+F,    // 0
+    B+C,            // 1
+    A+B+G+E+D,      // 2
+    A+B+G+C+D,      // 3
+    F+G+B+C,        // 4
+    A+F+G+C+D,      // 5
+    A+C+D+E+F+G,    // 6
+    A+B+C,          // 7
+    A+B+C+D+E+F+G,  // 8
+    A+B+C+D+F+G,    // 9
+    A+F+E+D,        // CALIBRATE MAX
+    A+F+E+D+DP,     // CALIBRATE MIN
+};
 
 
+void display_number(int number){
+    if(number < 0 || number > 11) return;
+    digitalWrite(LATCH_PIN, LOW);
+    shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, LEVEL_DISPLAY[number]);  
+    digitalWrite(LATCH_PIN, HIGH);
+}
 
 void ldr_handler(int raw_ldr_value) {
     ldr_value = raw_ldr_value;
@@ -24,6 +53,7 @@ void ldr_handler(int raw_ldr_value) {
     pretty_log_int("max: ",max_ldr_value);
     pretty_log_int("lvl: ",value_to_ldr_level(raw_ldr_value));
     blank_line();
+    display_number(value_to_ldr_level(raw_ldr_value));
 }
 
 
@@ -70,12 +100,5 @@ void setup() {
 
 void loop() {
     ldr_handler(analogRead(LDR_PIN));
-
-    int ShiftOut_value = 1;
-    digitalWrite(LATCH_PIN, LOW);
-    shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, ShiftOut_value);  
-    digitalWrite(LATCH_PIN, HIGH);
-
-
     delay(300);
 }
