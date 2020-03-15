@@ -37,11 +37,16 @@ int LEVEL_DISPLAY [12] = {
 
 // ALARM 
 int LED_PIN = A1;
-int DESTIVATE_PUSH_BUTTON_PIN = A2;
+int DESTIVATE_PUSH_BUTTON_PIN = 2;
 int INTERVAL = 100;
 bool led_state = false;
 bool is_alarm_activated = false;
 unsigned long previous_time;
+
+
+// CALIBRATION
+int CALIBRATION_PIN = 3;
+
 
 
 void display_number(int number){
@@ -128,13 +133,12 @@ void setup() {
     pinMode(DATA_PIN,OUTPUT);
     pinMode(LED_PIN,OUTPUT);
     pinMode(DESTIVATE_PUSH_BUTTON_PIN, INPUT_PULLUP);
-
+    attachInterrupt(digitalPinToInterrupt(DESTIVATE_PUSH_BUTTON_PIN), desativate_alarm, CHANGE);
 }
 
 void loop() {
     ldr_handler(analogRead(LDR_PIN));
     led_handler();
 
-    if(digitalRead(DESTIVATE_PUSH_BUTTON_PIN)== LOW ) desativate_alarm();
    
 }
